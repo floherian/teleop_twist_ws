@@ -93,17 +93,20 @@ speedBindings = {
 }
 
 
-def getKey(settings):
-    if sys.platform == 'win32':
-        # getwch() returns a string on Windows
-        key = msvcrt.getwch()
-    else:
-        tty.setraw(sys.stdin.fileno())
+#def getKey(settings):
+ #   if sys.platform == 'win32':
+  #      # getwch() returns a string on Windows
+   #     key = msvcrt.getwch()
+    #else:
+     #   tty.setraw(sys.stdin.fileno())
         # sys.stdin.read() returns a string on Linux
-        key = sys.stdin.read(1)
-        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
-    return key
+      #  key = sys.stdin.read(1)
+       # termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
+    #return key
 
+#new getKey for websockets
+def getKey():
+    
 
 def saveTerminalSettings():
     if sys.platform == 'win32':
