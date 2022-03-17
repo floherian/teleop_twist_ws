@@ -155,7 +155,7 @@ def vels(speed, turn):
     return 'currently:\tspeed %s\tturn %s ' % (speed, turn)
 
 async def websocket_server():
-    async with websockets.serve(getKey, 'localhost', 4000)
+    async with websockets.serve(getKey, 'localhost', 4000):
         await asyncio.Future()
 
 def main():
@@ -164,17 +164,16 @@ def main():
 
     #settings = saveTerminalSettings()
 
-    finally:
-        twist = geometry_msgs.msg.Twist()
-        twist.linear.x = 0.0
-        twist.linear.y = 0.0
-        twist.linear.z = 0.0
-        twist.angular.x = 0.0
-        twist.angular.y = 0.0
-        twist.angular.z = 0.0
-        pub.publish(twist)
+    
+    twist = geometry_msgs.msg.Twist()
+    twist.linear.x = 0.0
+    twist.linear.y = 0.0
+    twist.linear.z = 0.0
+    twist.angular.x = 0.0
+    twist.angular.y = 0.0
+    twist.angular.z = 0.0
+    pub.publish(twist)
 
-        restoreTerminalSettings(settings)
 
 
 if __name__ == '__main__':
