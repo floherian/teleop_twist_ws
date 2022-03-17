@@ -42,6 +42,11 @@ else:
     import termios
     import tty
 
+#websocket imports
+import asyncio
+import logging
+import websockets
+from websockets import WebSocketServerProtocol
 
 msg = """
 This node takes keypresses from the keyboard and publishes them
@@ -117,6 +122,13 @@ def vels(speed, turn):
 
 
 def main():
+    #start websocket server
+    server = Server()
+    start_server = websockets.serve(server.ws_handler, 'localhost', 4000)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(start_server)
+    loop.run_forever()
+
     settings = saveTerminalSettings()
 
     rclpy.init()
