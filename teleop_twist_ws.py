@@ -93,97 +93,76 @@ speedBindings = {
 }
 
 
-#def getKey(settings):
- #   if sys.platform == 'win32':
-  #      # getwch() returns a string on Windows
-   #     key = msvcrt.getwch()
-    #else:
-     #   tty.setraw(sys.stdin.fileno())
-        # sys.stdin.read() returns a string on Linux
-      #  key = sys.stdin.read(1)
-       # termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
-    #return key
-
 #new getKey for websockets
-def getKey():
+async def getKey(websocket):
     
+    while True:
+        key = await websocket.recv()
+        
+        rclpy.init()
 
-def saveTerminalSettings():
-    if sys.platform == 'win32':
-        return None
-    return termios.tcgetattr(sys.stdin)
+        node = rclpy.create_node('teleop_twist_keyboard')
+        pub = node.create_publisher(geometry_msgs.msg.Twist, 'cmd_vel', 10)
 
+        speed = 0.5
+        turn = 1.0
+        x = 0.0
+        y = 0.0
+        z = 0.0
+        th = 0.0
+        status = 0.0
 
-def restoreTerminalSettings(old_settings):
-    if sys.platform == 'win32':
-        return
-    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+        try:
+            print(msg)
+            print(vels(speed, turn))
+            while True:
+                
+                if key in moveBindings.keys():
+                    x = moveBindings[key][0]
+                    y = moveBindings[key][1]
+                    z = moveBindings[key][2]
+                    th = moveBindings[key][3]
+                elif key in speedBindings.keys():
+                    speed = speed * speedBindings[key][0]
+                    turn = turn * speedBindings[key][1]
+
+                    print(vels(speed, turn))
+                    if (status == 14):
+                        print(msg)
+                    status = (status + 1) % 15
+                else:
+                    x = 0.0
+                    y = 0.0
+                    z = 0.0
+                    th = 0.0
+                    if (key == '\x03'):
+                        break
+
+                twist = geometry_msgs.msg.Twist()
+                twist.linear.x = x * speed
+                twist.linear.y = y * speed
+                twist.linear.z = z * speed
+                twist.angular.x = 0.0
+                twist.angular.y = 0.0
+                twist.angular.z = th * turn
+                pub.publish(twist)
+
+        except Exception as e:
+            print(e)
 
 
 def vels(speed, turn):
     return 'currently:\tspeed %s\tturn %s ' % (speed, turn)
 
+async def websocket_server():
+    async with websockets.serve(getKey, 'localhost', 4000)
+        await asyncio.Future()
 
 def main():
-    #start websocket server
-    server = Server()
-    start_server = websockets.serve(server.ws_handler, 'localhost', 4000)
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(start_server)
-    loop.run_forever()
+    # websocket server   
+    asyncio.run(websocket_server())
 
-    settings = saveTerminalSettings()
-
-    rclpy.init()
-
-    node = rclpy.create_node('teleop_twist_keyboard')
-    pub = node.create_publisher(geometry_msgs.msg.Twist, 'cmd_vel', 10)
-
-    speed = 0.5
-    turn = 1.0
-    x = 0.0
-    y = 0.0
-    z = 0.0
-    th = 0.0
-    status = 0.0
-
-    try:
-        print(msg)
-        print(vels(speed, turn))
-        while True:
-            key = getKey(settings)
-            if key in moveBindings.keys():
-                x = moveBindings[key][0]
-                y = moveBindings[key][1]
-                z = moveBindings[key][2]
-                th = moveBindings[key][3]
-            elif key in speedBindings.keys():
-                speed = speed * speedBindings[key][0]
-                turn = turn * speedBindings[key][1]
-
-                print(vels(speed, turn))
-                if (status == 14):
-                    print(msg)
-                status = (status + 1) % 15
-            else:
-                x = 0.0
-                y = 0.0
-                z = 0.0
-                th = 0.0
-                if (key == '\x03'):
-                    break
-
-            twist = geometry_msgs.msg.Twist()
-            twist.linear.x = x * speed
-            twist.linear.y = y * speed
-            twist.linear.z = z * speed
-            twist.angular.x = 0.0
-            twist.angular.y = 0.0
-            twist.angular.z = th * turn
-            pub.publish(twist)
-
-    except Exception as e:
-        print(e)
+    #settings = saveTerminalSettings()
 
     finally:
         twist = geometry_msgs.msg.Twist()
